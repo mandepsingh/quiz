@@ -1,53 +1,147 @@
 import React, { Component } from 'react';
-import { render } from 'react-dom';
-import QuizAp from './QuizAp.js';
-// import './style.css';
+import quizQuestions from './api/questions';
+import Quiz from './components/Quiz';
+import { Link } from 'react-router-dom';
+import Result from './components/Result';
+import Button from '@material-ui/core/Button';
+// import ResultCard from './components/ResultCard'
+//import logo from './svg/logo.svg';
+import './index.css';
+import './app.css';
+class App extends Component {
+  constructor(props) {
+    super(props);
 
-class QuizInd extends Component {
-  constructor() {
-    super();
     this.state = {
-      quiz: [
-        {
-          question: "Who is the writer of Godan?",
-          options: ["Dhanpat Rai Kapoor", "Sheera Prabahkar", "Premchand", "Dayanand"],
-          answer: "3"
-        },{
-          question: " 'Culture and Anarchy' was written by",
-          options: ["Raymond Williams", "F. R. Leavis", "Mathew Arnold", "Lionel Trilling"],
-          answer: "3"
-        },{
-          question: "The Romantic Age was the age of?",
-          options: ["Epic", "Drama", "Prose Fiction", "Lyric"],
-          answer: "1"
-        },{
-          question: "Pozzo is a character in",
-          options: ["Mother Courage", "Endgame", "Look Back in Anger", "Waiting for Godot"],
-          answer: "4"
-        },{
-          question: "Who wrote the Life of Byron?",
-          options: ["Robert Southey", "Thomas Moore", "Samuel Rogers", "Thomas Compbell"],
-          answer: "2"
-        },{
-          question: "Who is credited with the coinage of the phrase 'lost generation'?",
-          options: ["Gertrude Stein", "Ernest Hemingway", "Scott Fitzgerald", "Willa Cather"],
-          answer: "1"
-        },{
-          question: "Scholar Gypsy of Arnold is largely based on",
-          options: ["Clough", "Wordsworth", "Chaucer", "Spenser"],
-          answer: "2"
-        }
-      ]
+      counter: 0,
+      questionId: 1,
+      question: '',
+      answerOptions: [],
+      allQuestions: [],
+      answer: '',
+      selectedAnswers: {},
+      result: ''
     };
+    this.setNextQuestion = this.setNextQuestion.bind(this);
+    this.setPreviousQuestion = this.setPreviousQuestion.bind(this);
+    this.handleAnswerSelected = this.handleAnswerSelected.bind(this);
+    this.viewreults = this.viewreults.bind(this);
+  }
+  handleAnswerSelected(e) {
+    var _self = this;
+    var obj = _self.state.selectedAnswers;
+    var index = parseInt(e.target.value);
+    console.log(
+      'for selected question number ' +
+        (_self.state.counter + 1) +
+        ' answer is ' +
+        index +
+        ' selected'
+    );
+    var Qindex = _self.state.counter;
+    // create map and store all selecred answers with quiz Questions
+    obj[Qindex] = index;
+    _self.setState({ selectedAnswers: obj });
   }
 
+  componentWillMount() {
+    this.setState({
+      question: quizQuestions[0].question,
+      answerOptions: quizQuestions[0].answers,
+      allQuestions: quizQuestions
+    });
+  }
+
+  setNextQuestion() {
+    const counter = this.state.counter + 1;
+    const questionId = this.state.questionId + 1;
+
+    this.setState({
+      counter: counter,
+      questionId: questionId,
+      question: quizQuestions[counter].question,
+      answerOptions: quizQuestions[counter].answers,
+      answer: ''
+    });
+  }
+  setPreviousQuestion() {
+    const counter = this.state.counter - 1;
+    const questionId = this.state.questionId - 1;
+
+    this.setState({
+      counter: counter,
+      questionId: questionId,
+      question: quizQuestions[counter].question,
+      answerOptions: quizQuestions[counter].answers,
+      answer: ''
+    });
+  }
+
+  getResults() {
+    const answersCount = this.state.answersCount;
+    const answersCountKeys = Object.keys(answersCount);
+    const answersCountValues = answersCountKeys.map(key => answersCount[key]);
+    const maxAnswerCount = Math.max.apply(null, answersCountValues);
+
+    return answersCountKeys.filter(key => answersCount[key] === maxAnswerCount);
+  }
+
+  setResults(result) {
+    if (result.length === 1) {
+      this.setState({ result: result[0] });
+    } else {
+      this.setState({ result: 'Undetermined' });
+    }
+  }
+
+  renderQuiz() {
+    return (
+      <>
+        <Quiz
+          class="quizMain"
+          viewreults={this.viewreults}
+          setNextQuestion={this.setNextQuestion}
+          counter={this.state.counter}
+          setPreviousQuestion={this.setPreviousQuestion}
+          answer={this.state.answer}
+          selectedAnswer={this.state.selectedAnswers[this.state.counter]}
+          answerOptions={this.state.answerOptions}
+          questionId={this.state.questionId}
+          question={this.state.question}
+          questionTotal={quizQuestions.length}
+          onAnswerSelected={this.handleAnswerSelected}
+        />
+        {/* <ResultCard/> */}
+      </>
+    );
+  }
+
+  renderResult() {
+    return (
+      <Result
+        quizResult={this.state.allQuestions}
+        answers={this.state.selectedAnswers}
+      />
+    );
+  }
+  viewreults(e) {
+    e.preventDefault();
+    this.setState({ result: true });
+  }
+  // decide to render result or quiz
   render() {
     return (
-      <div>
-        <QuizAp quiz={this.state.quiz}/>
+      <div className="App">
+        <div className="App-header">
+        <Link to='/'><Button label="Quiz by Mandy" style={{color:'white', fontSize: '1.2rem', marginLeft:'2vw'}}>Quiz by Mandy</Button></Link>
+          <h2>Quiz Assignment </h2>
+        </div>
+        {this.state.result ? this.renderResult() : this.renderQuiz()}
+        {/* {this.state.result = this.renderQuiz()}
+        {this.state.result = this.renderResult()} */}
       </div>
     );
   }
 }
 
-export default QuizInd;
+export default App;
